@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Monitor Dashboard</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Map Library -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Chart Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        header h1 i {
+            color: #ff6b6b;
+        }
+        
+        .device-id {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            font-size: 1.8rem;
+        }
+        
+        .heart-rate .card-title i {
+            color: #ff6b6b;
+        }
+        
+        .sleep-level .card-title i {
+            color: #4d96ff;
+        }
+        
+        .gps .card-title i {
+            color: #6bcf7f;
+        }
+        
+        .card-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .heart-rate .card-value {
+            color: #ff6b6b;
+            animation: heartbeat 1.5s infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .sleep-level .card-value {
+            color: #4d96ff;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-normal { background-color: #6bcf7f; }
+        .status-light { background-color: #ffd166; }
+        .status-medium { background-color: #ff9a3c; }
+        .status-heavy { background-color: #ff6b6b; }
+        
+        .status-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .map-container {
+            height: 300px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 15px;
+            border: 3px solid #f0f0f0;
+        }
+        
+        .coordinates {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-family: monospace;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .timestamp {
+            font-size: 1rem;
+            color: #666;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .chart-container {
+            margin-top: 20px;
+            height: 250px;
+            position: relative;
+        }
+        
+        .data-history {
+            grid-column: span 2;
+        }
+        
+        .alerts {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .alert {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            max-width: 350px;
+            animation: slideIn 0.5s ease-out;
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .alert i {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+        }
+        
+        .alert-content h4 {
+            margin-bottom: 5px;
+            color: #444;
+        }
+        
+        .alert-content p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .connected { color: #6bcf7f; }
+        .disconnected { color: #ff6b6b; }
+        
+        .last-update {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .full-screen-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background 0.3s;
+        }
+        
+        .full-screen-btn:hover {
+            background: #5a67d8;
+        }
+        
+        @media (max-width: 1100px) {
+            .data-history {
+                grid-column: span 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .card-value {
+                font-size: 2.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-heartbeat"></i> Health Monitor Dashboard</h1>
+            <p>Real-time Monitoring Detak Jantung & Tingkat Kantuk</p>
+            <div class="device-id">Device: <span id="deviceId">HM2025</span></div>
+        </header>
+        
+        <div class="dashboard">
+            <!-- Heart Rate Card -->
+            <div class="card heart-rate">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-heart"></i> Detak Jantung</h2>
+                    <div class="card-status" id="heartStatus"></div>
+                </div>
+                <div class="card-value" id="bpmValue">--</div>
+                <div class="card-subtitle">Denyut per Menit (BPM)</div>
+                
+                <div class="chart-container">
+                    <canvas id="bpmChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Sleep Level Card -->
+            <div class="card sleep-level">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-bed"></i> Tingkat Kantuk</h2>
+                </div>
+                <div class="card-value" id="sleepLevelValue">--</div>
+                <div class="status-text" id="sleepStatusText">
+                    <span class="status-indicator" id="sleepIndicator"></span>
+                    <span id="sleepStatus">Menunggu data...</span>
+                </div>
+                
+                <div class="sleep-description" id="sleepDescription" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <p style="color: #666; text-align: center;">Data akan muncul di sini</p>
+                </div>
+            </div>
+            
+            <!-- GPS Location Card -->
+            <div class="card gps">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-map-marker-alt"></i> Lokasi GPS</h2>
+                    <div id="gpsStatus" style="color: #666;">Menunggu...</div>
+                </div>
+                
+                <div class="map-container" id="map"></div>
+                
+                <div class="coordinates">
+                    <div>
+                        <div style="font-size: 0.9rem; color: #888;">Latitude</div>
+                        <div id="latitude">0.000000</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: #888;">Longitude</div>
+                        <div id="longitude">0.000000</div>
+                    </div>
+                </div>
+                
+                <div class="timestamp" id="gpsTimestamp">
+                    Terakhir diperbarui: --
+                </div>
+            </div>
+            
+            <!-- Data History Card -->
+            <div class="card data-history">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-history"></i> Riwayat Data</h2>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table id="dataTable" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <thead>
+                            <tr style="background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">
+                                <th style="padding: 15px; text-align: left;">Waktu</th>
+                                <th style="padding: 15px; text-align: left;">BPM</th>
+                                <th style="padding: 15px; text-align: left;">Tingkat Kantuk</th>
+                                <th style="padding: 15px; text-align: left;">Lokasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <tr>
+                                <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Menunggu data dari perangkat...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px; color: #666; font-size: 0.9rem;">
+                    <div>Total Data: <span id="totalData">0</span></div>
+                    <button id="clearData" style="background: #ff6b6b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Hapus Riwayat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alerts Container -->
+    <div class="alerts" id="alertsContainer"></div>
+    
+    <!-- Connection Status -->
+    <div class="connection-status">
+        <i class="fas fa-circle" id="connectionIcon"></i>
+        <span id="connectionText">Menghubungkan ke Firebase...</span>
+    </div>
+    
+    <!-- Last Update -->
+    <div class="last-update" id="lastUpdate">
+        Data terakhir: --
+    </div>
+    
+    <!-- Full Screen Button -->
+    <button class="full-screen-btn" onclick="toggleFullScreen()">
+        <i class="fas fa-expand"></i>
+    </button>
+    
+    <script>
+        // Konfigurasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxiW5GxOBz0DVYpy99ka2Jx6hejja2oLE",
+            authDomain: "ngantuk-d0fb9.firebaseapp.com",
+            databaseURL: "https://ngantuk-d0fb9-default-rtdb.firebaseio.com",
+            projectId: "ngantuk-d0fb9",
+            storageBucket: "ngantuk-d0fb9.firebasestorage.app",
+            messagingSenderId: "882012043542",
+            appId: "1:882012043542:web:8bac56ba8711783bad3837",
+            measurementId: "G-96THETW9DT"
+        };
+        
+        // Inisialisasi Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Variabel global
+        let map = null;
+        let marker = null;
+        let bpmChart = null;
+        let bpmData = [];
+        let timestamps = [];
+        let maxDataPoints = 20;
+        let deviceId = "HM2025";
+        let lastAlertTime = 0;
+        const alertCooldown = 10000; // 10 detik
+        
+        // Inisialisasi peta
+        function initMap() {
+            // Default lokasi (Bandung)
+            const defaultLat = -6.9175;
+            const defaultLng = 107.6191;
+            
+            map = L.map('map').setView([defaultLat, defaultLng], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Tambahkan marker
+            marker = L.marker([defaultLat, defaultLng]).addTo(map)
+                .bindPopup('Lokasi perangkat')
+                .openPopup();
+        }
+        
+        // Inisialisasi chart BPM
+        function initBPMChart() {
+            const ctx = document.getElementById('bpmChart').getContext('2d');
+            
+            bpmChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: 'Detak Jantung (BPM)',
+                        data: bpmData,
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff6b6b',
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Waktu'
+                            },
+                            ticks: {
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'BPM'
+                            },
+                            suggestedMin: 40,
+                            suggestedMax: 120
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update data BPM di chart
+        function updateBPMChart(bpm, timestamp) {
+            // Format waktu untuk label
+            const time = new Date(timestamp).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Tambah data baru
+            bpmData.push(bpm);
+            timestamps.push(time);
+            
+            // Batasi jumlah data yang ditampilkan
+            if (bpmData.length > maxDataPoints) {
+                bpmData.shift();
+                timestamps.shift();
+            }
+            
+            // Update chart
+            bpmChart.data.labels = timestamps;
+            bpmChart.data.datasets[0].data = bpmData;
+            bpmChart.update('none');
+        }
+        
+        // Tampilkan alert
+        function showAlert(title, message, type = 'info') {
+            const now = Date.now();
+            if (now - lastAlertTime < alertCooldown) return;
+            
+            lastAlertTime = now;
+            
+            const alertsContainer = document.getElementById('alertsContainer');
+            const alertId = 'alert-' + now;
+            
+            const iconMap = {
+                'warning': 'exclamation-triangle',
+                'danger': 'exclamation-circle',
+                'info': 'info-circle',
+                'success': 'check-circle'
+            };
+            
+            const alertHTML = `
+                <div class="alert" id="${alertId}">
+                    <i class="fas fa-${iconMap[type] || 'info-circle'}"></i>
+                    <div class="alert-content">
+                        <h4>${title}</h4>
+                        <p>${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            alertsContainer.insertAdjacentHTML('afterbegin', alertHTML);
+            
+            // Hapus alert setelah 5 detik
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.remove();
+                }
+            }, 5000);
+        }
+        
+        // Update tampilan tingkat kantuk
+        function updateSleepLevel(level) {
+            const sleepLevelValue = document.getElementById('sleepLevelValue');
+            const sleepIndicator = document.getElementById('sleepIndicator');
+            const sleepStatus = document.getElementById('sleepStatus');
+            const sleepDescription = document.getElementById('sleepDescription');
+            
+            sleepLevelValue.textContent = level;
+            
+            let statusText = '';
+            let statusClass = '';
+            let description = '';
+            let alertShown = false;
+            
+            switch(parseInt(level)) {
+                case 0:
+                    statusText = 'Normal';
+                    statusClass = 'status-normal';
+                    description = 'Kondisi normal, tidak ada tanda-tanda kantuk.';
+                    break;
+                case 1:
+                    statusText = 'Ringan';
+                    statusClass = 'status-light';
+                    description = 'Mulai merasa lelah, tetapi masih bisa fokus.';
+                    break;
+                case 2:
+                    statusText = 'Sedang';
+                    statusClass = 'status-medium';
+                    description = 'Kantuk cukup mengganggu, perlu istirahat segera.';
+                    alertShown = true;
+                    break;
+                case 3:
+                    statusText = 'Berat';
+                    statusClass = 'status-heavy';
+                    description = 'Kantuk berat! Sangat berbahaya untuk berkendara atau mengoperasikan mesin.';
+                    alertShown = true;
+                    break;
+                default:
+                    statusText = 'Tidak diketahui';
+                    statusClass = 'status-normal';
+                    description = 'Data tingkat kantuk tidak valid.';
+            }
+            
+            sleepIndicator.className = 'status-indicator ' + statusClass;
+            sleepStatus.textContent = statusText;
+            
+            sleepDescription.innerHTML = `
+                <p style="margin-bottom: 10px; font-weight: 600; color: #444;">${statusText}</p>
+                <p style="color: #666; line-height: 1.5;">${description}</p>
+            `;
+            
+            // Tampilkan alert untuk tingkat kantuk sedang dan berat
+            if (alertShown && parseInt(level) >= 2) {
+                const alertTitle = parseInt(level) === 3 ? 'PERINGATAN: Kantuk Berat!' : 'Peringatan: Kantuk Sedang';
+                showAlert(alertTitle, description, parseInt(level) === 3 ? 'danger' : 'warning');
+            }
+        }
+        
+        // Update status jantung
+        function updateHeartStatus(bpm) {
+            const heartStatus = document.getElementById('heartStatus');
+            
+            if (bpm < 60) {
+                heartStatus.innerHTML = '<span style="color: #4d96ff; font-weight: 600;">Rendah</span>';
+            } else if (bpm >= 60 && bpm <= 100) {
+                heartStatus.innerHTML = '<span style="color: #6bcf7f; font-weight: 600;">Normal</span>';
+            } else {
+                heartStatus.innerHTML = '<span style="color: #ff6b6b; font-weight: 600;">Tinggi</span>';
+                
+                // Tampilkan alert untuk detak jantung tinggi
+                if (bpm > 100) {
+                    showAlert('Detak Jantung Tinggi!', `Detak jantung ${bpm} BPM melebihi batas normal.`, 'warning');
+                }
+            }
+        }
+        
+        // Update lokasi di peta
+        function updateLocation(lat, lng, timestamp) {
+            if (!map || !marker) return;
+            
+            // Update marker position
+            marker.setLatLng([lat, lng]);
+            map.setView([lat, lng], 13);
+            
+            // Update coordinates display
+            document.getElementById('latitude').textContent = lat.toFixed(6);
+            document.getElementById('longitude').textContent = lng.toFixed(6);
+            
+            // Format timestamp
+            const date = new Date(timestamp);
+            const formattedTime = date.toLocaleString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            document.getElementById('gpsTimestamp').innerHTML = `
+                <i class="fas fa-clock"></i> Terakhir diperbarui: ${formattedTime}
+            `;
+            
+            document.getElementById('gpsStatus').innerHTML = `
+                <span style="color: #6bcf7f;"><i class="fas fa-check-circle"></i> Terhubung</span>
+            `;
+        }
+        
+        // Tambah data ke tabel riwayat
+        function addToHistory(data) {
+            const tableBody = document.getElementById('dataTableBody');
+            const totalDataElement = document.getElementById('totalData');
+            
+            // Hapus pesan "menunggu data" jika ada
+            if (tableBody.children.length === 1 && tableBody.children[0].children.length === 1) {
+                tableBody.innerHTML = '';
+            }
+            
+            // Format waktu
+            const date = new Date(data.timestamp || Date.now());
+            const formattedTime = date.toLocaleString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            // Format tingkat kantuk
+            let sleepLevelText = '';
+            switch(parseInt(data.tingkat_ngantuk)) {
+                case 0: sleepLevelText = '<span style="color: #6bcf7f;">Normal</span>'; break;
+                case 1: sleepLevelText = '<span style="color: #ffd166;">Ringan</span>'; break;
+                case 2: sleepLevelText = '<span style="color: #ff9a3c;">Sedang</span>'; break;
+                case 3: sleepLevelText = '<span style="color: #ff6b6b;">Berat</span>'; break;
+                default: sleepLevelText = 'Tidak diketahui';
+            }
+            
+            // Format lokasi
+            const locationText = data.latitude !== 0 && data.longitude !== 0 
+                ? `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`
+                : 'Tidak tersedia';
+            
+            // Tambah baris baru
+            const newRow = document.createElement('tr');
+            newRow.style.borderBottom = '1px solid #f0f0f0';
+            newRow.innerHTML = `
+                <td style="padding: 15px;">${formattedTime}</td>
+                <td style="padding: 15px; font-weight: 600;">${data.bpm}</td>
+                <td style="padding: 15px;">${sleepLevelText}</td>
+                <td style="padding: 15px;">${locationText}</td>
+            `;
+            
+            // Tambah di awal tabel
+            tableBody.insertBefore(newRow, tableBody.firstChild);
+            
+            // Batasi jumlah baris
+            if (tableBody.children.length > 10) {
+                tableBody.removeChild(tableBody.lastChild);
+            }
+            
+            // Update total data
+            totalDataElement.textContent = parseInt(totalDataElement.textContent) + 1;
+        }
+        
+        // Update status koneksi
+        function updateConnectionStatus(connected) {
+            const connectionIcon = document.getElementById('connectionIcon');
+            const connectionText = document.getElementById('connectionText');
+            
+            if (connected) {
+                connectionIcon.className = 'fas fa-circle connected';
+                connectionText.textContent = 'Terhubung ke Firebase';
+                connectionText.style.color = '#6bcf7f';
+            } else {
+                connectionIcon.className = 'fas fa-circle disconnected';
+                connectionText.textContent = 'Terputus dari Firebase';
+                connectionText.style.color = '#ff6b6b';
+            }
+        }
+        
+        // Update waktu terakhir
+        function updateLastUpdate() {
+            const lastUpdateElement = document.getElementById('lastUpdate');
+            const now = new Date();
+            const formattedTime = now.toLocaleString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            lastUpdateElement.innerHTML = `
+                <i class="fas fa-sync-alt"></i> Diperbarui: ${formattedTime}
+            `;
+        }
+        
+        // Fungsi fullscreen
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                document.querySelector('.full-screen-btn i').className = 'fas fa-compress';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.querySelector('.full-screen-btn i').className = 'fas fa-expand';
+                }
+            }
+        }
+        
+        // Mendengarkan data dari Firebase
+        function listenToFirebase() {
+            const deviceRef = database.ref(`devices/${deviceId}/records`);
+            
+            deviceRef.limitToLast(1).on('child_added', (snapshot) => {
+                const data = snapshot.val();
+                console.log('Data baru diterima:', data);
+                
+                // Update UI dengan data baru
+                if (data.bpm) {
+                    document.getElementById('bpmValue').textContent = data.bpm;
+                    updateBPMChart(data.bpm, Date.now());
+                    updateHeartStatus(data.bpm);
+                }
+                
+                if (data.tingkat_ngantuk !== undefined) {
+                    updateSleepLevel(data.tingkat_ngantuk);
+                }
+                
+                if (data.latitude && data.longitude && data.latitude !== 0 && data.longitude !== 0) {
+                    updateLocation(data.latitude, data.longitude, Date.now());
+                }
+                
+                if (data.device_id) {
+                    document.getElementById('deviceId').textContent = data.device_id;
+                }
+                
+                // Tambah ke riwayat
+                addToHistory(data);
+                
+                // Update status koneksi
+                updateConnectionStatus(true);
+                
+                // Update waktu terakhir
+                updateLastUpdate();
+                
+                // Tampilkan alert untuk BPM rendah
+                if (data.bpm && data.bpm < 62) {
+                    showAlert('Detak Jantung Rendah', `Detak jantung ${data.bpm} BPM di bawah batas normal.`, 'warning');
+                }
+            });
+            
+            // Monitor status koneksi
+            database.ref('.info/connected').on('value', (snapshot) => {
+                const connected = snapshot.val() === true;
+                updateConnectionStatus(connected);
+                
+                if (!connected) {
+                    document.getElementById('gpsStatus').innerHTML = `
+                        <span style="color: #ff6b6b;"><i class="fas fa-times-circle"></i> Terputus</span>
+                    `;
+                }
+            });
+        }
+        
+        // Hapus riwayat data
+        document.getElementById('clearData').addEventListener('click', function() {
+            if (confirm('Apakah Anda yakin ingin menghapus semua riwayat data?')) {
+                const tableBody = document.getElementById('dataTableBody');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Menunggu data dari perangkat...</td>
+                    </tr>
+                `;
+                document.getElementById('totalData').textContent = '0';
+                
+                // Reset chart data
+                bpmData = [];
+                timestamps = [];
+                bpmChart.data.labels = timestamps;
+                bpmChart.data.datasets[0].data = bpmData;
+                bpmChart.update();
+                
+                showAlert('Riwayat Dihapus', 'Semua riwayat data telah dihapus.', 'info');
+            }
+        });
+        
+        // Inisialisasi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi peta
+            initMap();
+            
+            // Inisialisasi chart
+            initBPMChart();
+            
+            // Mulai mendengarkan data dari Firebase
+            listenToFirebase();
+            
+            // Update waktu setiap detik
+            setInterval(updateLastUpdate, 1000);
+            
+            // Simulasi data untuk demo (jika tidak ada koneksi Firebase)
+            setTimeout(() => {
+                if (document.getElementById('bpmValue').textContent === '--') {
+                    showAlert('Demo Mode', 'Menggunakan data simulasi karena tidak ada koneksi ke perangkat.', 'info');
+                    
+                    // Data simulasi
+                    const simulatedData = {
+                        bpm: Math.floor(Math.random() * 40) + 60,
+                        tingkat_ngantuk: Math.floor(Math.random() * 4),
+                        latitude: -6.9175 + (Math.random() * 0.01 - 0.005),
+                        longitude: 107.6191 + (Math.random() * 0.01 - 0.005),
+                        device_id: "HM2025",
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // Update UI dengan data simulasi
+                    document.getElementById('bpmValue').textContent = simulatedData.bpm;
+                    updateBPMChart(simulatedData.bpm, Date.now());
+                    updateHeartStatus(simulatedData.bpm);
+                    updateSleepLevel(simulatedData.tingkat_ngantuk);
+                    updateLocation(simulatedData.latitude, simulatedData.longitude, Date.now());
+                    addToHistory(simulatedData);
+                    updateConnectionStatus(true);
+                    updateLastUpdate();
+                }
+            }, 5000);
+        });
+        
+        // Tangani perubahan ukuran layar
+        window.addEventListener('resize', function() {
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+    </script>
+</body>
+</html>
