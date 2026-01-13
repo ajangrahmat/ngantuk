@@ -296,6 +296,57 @@
             background: #5a67d8;
         }
         
+        /* Table Styles */
+        .data-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #444;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
         @media (max-width: 1100px) {
             .data-history {
                 grid-column: span 1;
@@ -319,6 +370,12 @@
             
             .card-value {
                 font-size: 2.8rem;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 10px;
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -391,21 +448,32 @@
             <div class="card data-history">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-history"></i> Riwayat Data</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="refreshData" class="refresh-btn" style="background: #667eea; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button id="clearData" style="background: #ff6b6b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-trash"></i> Hapus Semua
+                        </button>
+                    </div>
                 </div>
                 
-                <div style="overflow-x: auto;">
-                    <table id="dataTable" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <div class="data-table-container">
+                    <table class="data-table">
                         <thead>
-                            <tr style="background: #f8f9fa; border-bottom: 2px solid #e0e0e0;">
-                                <th style="padding: 15px; text-align: left;">Waktu</th>
-                                <th style="padding: 15px; text-align: left;">BPM</th>
-                                <th style="padding: 15px; text-align: left;">Tingkat Kantuk</th>
-                                <th style="padding: 15px; text-align: left;">Lokasi</th>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>BPM</th>
+                                <th>Tingkat Kantuk</th>
+                                <th>Lokasi</th>
                             </tr>
                         </thead>
                         <tbody id="dataTableBody">
                             <tr>
-                                <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Menunggu data dari perangkat...</td>
+                                <td colspan="4" class="loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Memuat data dari Firebase...</p>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -413,7 +481,7 @@
                 
                 <div style="display: flex; justify-content: space-between; margin-top: 20px; color: #666; font-size: 0.9rem;">
                     <div>Total Data: <span id="totalData">0</span></div>
-                    <button id="clearData" style="background: #ff6b6b; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Hapus Riwayat</button>
+                    <div>Menampilkan: <span id="showingData">0</span> data</div>
                 </div>
             </div>
         </div>
@@ -465,10 +533,11 @@
         let deviceId = "HM2025";
         let lastAlertTime = 0;
         const alertCooldown = 10000; // 10 detik
+        let allRecords = [];
+        let isFirstLoad = true;
         
         // Inisialisasi peta
         function initMap() {
-            // Default lokasi (Bandung)
             const defaultLat = -6.9175;
             const defaultLng = 107.6191;
             
@@ -478,7 +547,6 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
             
-            // Tambahkan marker
             marker = L.marker([defaultLat, defaultLng]).addTo(map)
                 .bindPopup('Lokasi perangkat')
                 .openPopup();
@@ -595,7 +663,6 @@
             
             alertsContainer.insertAdjacentHTML('afterbegin', alertHTML);
             
-            // Hapus alert setelah 5 detik
             setTimeout(() => {
                 const alertElement = document.getElementById(alertId);
                 if (alertElement) {
@@ -655,7 +722,6 @@
                 <p style="color: #666; line-height: 1.5;">${description}</p>
             `;
             
-            // Tampilkan alert untuk tingkat kantuk sedang dan berat
             if (alertShown && parseInt(level) >= 2) {
                 const alertTitle = parseInt(level) === 3 ? 'PERINGATAN: Kantuk Berat!' : 'Peringatan: Kantuk Sedang';
                 showAlert(alertTitle, description, parseInt(level) === 3 ? 'danger' : 'warning');
@@ -673,7 +739,6 @@
             } else {
                 heartStatus.innerHTML = '<span style="color: #ff6b6b; font-weight: 600;">Tinggi</span>';
                 
-                // Tampilkan alert untuk detak jantung tinggi
                 if (bpm > 100) {
                     showAlert('Detak Jantung Tinggi!', `Detak jantung ${bpm} BPM melebihi batas normal.`, 'warning');
                 }
@@ -684,15 +749,12 @@
         function updateLocation(lat, lng, timestamp) {
             if (!map || !marker) return;
             
-            // Update marker position
             marker.setLatLng([lat, lng]);
             map.setView([lat, lng], 13);
             
-            // Update coordinates display
             document.getElementById('latitude').textContent = lat.toFixed(6);
             document.getElementById('longitude').textContent = lng.toFixed(6);
             
-            // Format timestamp
             const date = new Date(timestamp);
             const formattedTime = date.toLocaleString('id-ID', {
                 weekday: 'long',
@@ -713,59 +775,172 @@
             `;
         }
         
-        // Tambah data ke tabel riwayat
-        function addToHistory(data) {
+        // Ambil semua data dari Firebase
+        async function loadAllRecords() {
+            try {
+                const snapshot = await database.ref(`devices/${deviceId}/records`).once('value');
+                allRecords = [];
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const data = childSnapshot.val();
+                        data.key = childSnapshot.key; // Simpan key sebagai ID unik
+                        data.timestamp = parseInt(childSnapshot.key); // Konversi key ke timestamp
+                        allRecords.push(data);
+                    });
+                    
+                    // Urutkan berdasarkan timestamp (terbaru ke terlama)
+                    allRecords.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    // Update tabel
+                    updateDataTable();
+                    
+                    // Update chart dengan data terbaru
+                    updateChartWithAllData();
+                    
+                    // Update data real-time dengan data terbaru
+                    if (allRecords.length > 0) {
+                        const latestData = allRecords[0];
+                        updateRealTimeDisplay(latestData);
+                    }
+                    
+                    showAlert('Data Dimuat', `Berhasil memuat ${allRecords.length} data dari Firebase.`, 'success');
+                } else {
+                    console.log('Tidak ada data di Firebase');
+                    document.getElementById('dataTableBody').innerHTML = `
+                        <tr>
+                            <td colspan="4" class="loading">
+                                <i class="fas fa-database"></i>
+                                <p>Tidak ada data di database</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showAlert('Error', 'Gagal memuat data dari Firebase', 'danger');
+            }
+        }
+        
+        // Update tabel dengan semua data
+        function updateDataTable() {
             const tableBody = document.getElementById('dataTableBody');
-            const totalDataElement = document.getElementById('totalData');
             
-            // Hapus pesan "menunggu data" jika ada
-            if (tableBody.children.length === 1 && tableBody.children[0].children.length === 1) {
-                tableBody.innerHTML = '';
+            if (allRecords.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="loading">
+                            <i class="fas fa-database"></i>
+                            <p>Tidak ada data</p>
+                        </td>
+                    </tr>
+                `;
+                return;
             }
             
-            // Format waktu
-            const date = new Date(data.timestamp || Date.now());
-            const formattedTime = date.toLocaleString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
+            let tableHTML = '';
+            
+            // Batasi tampilan di tabel (tampilkan 50 data terbaru)
+            const displayRecords = allRecords.slice(0, 50);
+            
+            displayRecords.forEach(record => {
+                // Format waktu
+                const date = new Date(record.timestamp);
+                const formattedTime = date.toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                // Format tingkat kantuk
+                let sleepLevelText = '';
+                switch(parseInt(record.tingkat_ngantuk)) {
+                    case 0: sleepLevelText = '<span style="color: #6bcf7f;">Normal</span>'; break;
+                    case 1: sleepLevelText = '<span style="color: #ffd166;">Ringan</span>'; break;
+                    case 2: sleepLevelText = '<span style="color: #ff9a3c;">Sedang</span>'; break;
+                    case 3: sleepLevelText = '<span style="color: #ff6b6b;">Berat</span>'; break;
+                    default: sleepLevelText = 'Tidak diketahui';
+                }
+                
+                // Format lokasi
+                const locationText = record.latitude !== 0 && record.longitude !== 0 
+                    ? `${record.latitude.toFixed(4)}, ${record.longitude.toFixed(4)}`
+                    : 'Tidak tersedia';
+                
+                tableHTML += `
+                    <tr>
+                        <td>${formattedTime}</td>
+                        <td style="font-weight: 600;">${record.bpm || '--'}</td>
+                        <td>${sleepLevelText}</td>
+                        <td>${locationText}</td>
+                    </tr>
+                `;
             });
             
-            // Format tingkat kantuk
-            let sleepLevelText = '';
-            switch(parseInt(data.tingkat_ngantuk)) {
-                case 0: sleepLevelText = '<span style="color: #6bcf7f;">Normal</span>'; break;
-                case 1: sleepLevelText = '<span style="color: #ffd166;">Ringan</span>'; break;
-                case 2: sleepLevelText = '<span style="color: #ff9a3c;">Sedang</span>'; break;
-                case 3: sleepLevelText = '<span style="color: #ff6b6b;">Berat</span>'; break;
-                default: sleepLevelText = 'Tidak diketahui';
+            tableBody.innerHTML = tableHTML;
+            
+            // Update counters
+            document.getElementById('totalData').textContent = allRecords.length;
+            document.getElementById('showingData').textContent = displayRecords.length;
+        }
+        
+        // Update chart dengan semua data
+        function updateChartWithAllData() {
+            // Reset chart data
+            bpmData = [];
+            timestamps = [];
+            
+            // Ambil 20 data terbaru untuk chart
+            const chartData = allRecords.slice(0, 20).reverse(); // Reverse untuk urutan yang benar
+            
+            chartData.forEach(record => {
+                if (record.bpm) {
+                    const time = new Date(record.timestamp).toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    bpmData.push(record.bpm);
+                    timestamps.push(time);
+                }
+            });
+            
+            // Update chart
+            if (bpmChart) {
+                bpmChart.data.labels = timestamps;
+                bpmChart.data.datasets[0].data = bpmData;
+                bpmChart.update();
+            }
+        }
+        
+        // Update real-time display
+        function updateRealTimeDisplay(data) {
+            if (data.bpm) {
+                document.getElementById('bpmValue').textContent = data.bpm;
+                updateBPMChart(data.bpm, Date.now());
+                updateHeartStatus(data.bpm);
             }
             
-            // Format lokasi
-            const locationText = data.latitude !== 0 && data.longitude !== 0 
-                ? `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`
-                : 'Tidak tersedia';
-            
-            // Tambah baris baru
-            const newRow = document.createElement('tr');
-            newRow.style.borderBottom = '1px solid #f0f0f0';
-            newRow.innerHTML = `
-                <td style="padding: 15px;">${formattedTime}</td>
-                <td style="padding: 15px; font-weight: 600;">${data.bpm}</td>
-                <td style="padding: 15px;">${sleepLevelText}</td>
-                <td style="padding: 15px;">${locationText}</td>
-            `;
-            
-            // Tambah di awal tabel
-            tableBody.insertBefore(newRow, tableBody.firstChild);
-            
-            // Batasi jumlah baris
-            if (tableBody.children.length > 10) {
-                tableBody.removeChild(tableBody.lastChild);
+            if (data.tingkat_ngantuk !== undefined) {
+                updateSleepLevel(data.tingkat_ngantuk);
             }
             
-            // Update total data
-            totalDataElement.textContent = parseInt(totalDataElement.textContent) + 1;
+            if (data.latitude && data.longitude && data.latitude !== 0 && data.longitude !== 0) {
+                updateLocation(data.latitude, data.longitude, Date.now());
+            }
+            
+            if (data.device_id) {
+                document.getElementById('deviceId').textContent = data.device_id;
+            }
+            
+            updateConnectionStatus(true);
+            updateLastUpdate();
+            
+            if (data.bpm && data.bpm < 62) {
+                showAlert('Detak Jantung Rendah', `Detak jantung ${data.bpm} BPM di bawah batas normal.`, 'warning');
+            }
         }
         
         // Update status koneksi
@@ -814,82 +989,20 @@
             }
         }
         
-        // Mendengarkan data dari Firebase
-        function listenToFirebase() {
-            const deviceRef = database.ref(`devices/${deviceId}/records`);
-            
-            deviceRef.limitToLast(1).on('child_added', (snapshot) => {
-                const data = snapshot.val();
-                console.log('Data baru diterima:', data);
-                
-                // Update UI dengan data baru
-                if (data.bpm) {
-                    document.getElementById('bpmValue').textContent = data.bpm;
-                    updateBPMChart(data.bpm, Date.now());
-                    updateHeartStatus(data.bpm);
+        // Hapus semua data
+        async function clearAllData() {
+            if (confirm('Apakah Anda yakin ingin menghapus SEMUA data dari Firebase? Tindakan ini tidak dapat dibatalkan!')) {
+                try {
+                    await database.ref(`devices/${deviceId}/records`).remove();
+                    allRecords = [];
+                    updateDataTable();
+                    showAlert('Data Dihapus', 'Semua data telah dihapus dari Firebase.', 'success');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    showAlert('Error', 'Gagal menghapus data dari Firebase', 'danger');
                 }
-                
-                if (data.tingkat_ngantuk !== undefined) {
-                    updateSleepLevel(data.tingkat_ngantuk);
-                }
-                
-                if (data.latitude && data.longitude && data.latitude !== 0 && data.longitude !== 0) {
-                    updateLocation(data.latitude, data.longitude, Date.now());
-                }
-                
-                if (data.device_id) {
-                    document.getElementById('deviceId').textContent = data.device_id;
-                }
-                
-                // Tambah ke riwayat
-                addToHistory(data);
-                
-                // Update status koneksi
-                updateConnectionStatus(true);
-                
-                // Update waktu terakhir
-                updateLastUpdate();
-                
-                // Tampilkan alert untuk BPM rendah
-                if (data.bpm && data.bpm < 62) {
-                    showAlert('Detak Jantung Rendah', `Detak jantung ${data.bpm} BPM di bawah batas normal.`, 'warning');
-                }
-            });
-            
-            // Monitor status koneksi
-            database.ref('.info/connected').on('value', (snapshot) => {
-                const connected = snapshot.val() === true;
-                updateConnectionStatus(connected);
-                
-                if (!connected) {
-                    document.getElementById('gpsStatus').innerHTML = `
-                        <span style="color: #ff6b6b;"><i class="fas fa-times-circle"></i> Terputus</span>
-                    `;
-                }
-            });
-        }
-        
-        // Hapus riwayat data
-        document.getElementById('clearData').addEventListener('click', function() {
-            if (confirm('Apakah Anda yakin ingin menghapus semua riwayat data?')) {
-                const tableBody = document.getElementById('dataTableBody');
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Menunggu data dari perangkat...</td>
-                    </tr>
-                `;
-                document.getElementById('totalData').textContent = '0';
-                
-                // Reset chart data
-                bpmData = [];
-                timestamps = [];
-                bpmChart.data.labels = timestamps;
-                bpmChart.data.datasets[0].data = bpmData;
-                bpmChart.update();
-                
-                showAlert('Riwayat Dihapus', 'Semua riwayat data telah dihapus.', 'info');
             }
-        });
+        }
         
         // Inisialisasi saat halaman dimuat
         document.addEventListener('DOMContentLoaded', function() {
@@ -899,38 +1012,51 @@
             // Inisialisasi chart
             initBPMChart();
             
-            // Mulai mendengarkan data dari Firebase
-            listenToFirebase();
+            // Muat semua data dari Firebase
+            loadAllRecords();
+            
+            // Setup event listeners
+            document.getElementById('refreshData').addEventListener('click', loadAllRecords);
+            document.getElementById('clearData').addEventListener('click', clearAllData);
             
             // Update waktu setiap detik
             setInterval(updateLastUpdate, 1000);
             
-            // Simulasi data untuk demo (jika tidak ada koneksi Firebase)
-            setTimeout(() => {
-                if (document.getElementById('bpmValue').textContent === '--') {
-                    showAlert('Demo Mode', 'Menggunakan data simulasi karena tidak ada koneksi ke perangkat.', 'info');
-                    
-                    // Data simulasi
-                    const simulatedData = {
-                        bpm: Math.floor(Math.random() * 40) + 60,
-                        tingkat_ngantuk: Math.floor(Math.random() * 4),
-                        latitude: -6.9175 + (Math.random() * 0.01 - 0.005),
-                        longitude: 107.6191 + (Math.random() * 0.01 - 0.005),
-                        device_id: "HM2025",
-                        timestamp: new Date().toISOString()
-                    };
-                    
-                    // Update UI dengan data simulasi
-                    document.getElementById('bpmValue').textContent = simulatedData.bpm;
-                    updateBPMChart(simulatedData.bpm, Date.now());
-                    updateHeartStatus(simulatedData.bpm);
-                    updateSleepLevel(simulatedData.tingkat_ngantuk);
-                    updateLocation(simulatedData.latitude, simulatedData.longitude, Date.now());
-                    addToHistory(simulatedData);
-                    updateConnectionStatus(true);
-                    updateLastUpdate();
+            // Setup real-time listener untuk data baru
+            const recordsRef = database.ref(`devices/${deviceId}/records`);
+            
+            recordsRef.limitToLast(1).on('child_added', (snapshot) => {
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    return; // Skip data pertama karena sudah dimuat
                 }
-            }, 5000);
+                
+                const newData = snapshot.val();
+                newData.key = snapshot.key;
+                newData.timestamp = parseInt(snapshot.key);
+                
+                // Tambahkan data baru ke array
+                allRecords.unshift(newData); // Tambahkan di awal array
+                
+                // Update tabel
+                updateDataTable();
+                
+                // Update chart
+                updateBPMChart(newData.bpm, new Date(newData.timestamp));
+                
+                // Update real-time display
+                updateRealTimeDisplay(newData);
+                
+                // Update total data count
+                document.getElementById('totalData').textContent = allRecords.length;
+                
+                console.log('Data baru diterima:', newData);
+            });
+            
+            // Monitor status koneksi
+            database.ref('.info/connected').on('value', (snapshot) => {
+                updateConnectionStatus(snapshot.val() === true);
+            });
         });
         
         // Tangani perubahan ukuran layar
