@@ -78,9 +78,21 @@
         
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 25px;
+        }
+        
+        .heart-rate, .sleep-level {
+            grid-column: span 1;
+        }
+        
+        .gps {
+            grid-column: span 2;
+        }
+        
+        .data-history {
+            grid-column: span 4;
         }
         
         .card {
@@ -183,8 +195,9 @@
             display: inline-block;
         }
         
-        .map-container {
-            height: 280px;
+        /* GPS Card yang lebih besar */
+        .gps .map-container {
+            height: 320px; /* Tinggi peta diperbesar */
             border-radius: 12px;
             overflow: hidden;
             border: 2px solid #ecf0f1;
@@ -195,35 +208,34 @@
             display: flex;
             justify-content: space-around;
             background: #f8f9fa;
-            padding: 15px;
+            padding: 20px; /* Padding diperbesar */
             border-radius: 10px;
-            margin-top: 15px;
+            margin-top: 20px;
+            font-size: 1.1rem; /* Font size diperbesar */
         }
         
         .coord-item {
             text-align: center;
+            flex: 1;
         }
         
         .coord-label {
-            font-size: 0.8rem;
+            font-size: 0.9rem; /* Sedikit lebih besar */
             color: #7f8c8d;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         
         .coord-value {
             font-family: 'Courier New', monospace;
-            font-weight: 600;
+            font-weight: 700; /* Lebih tebal */
             color: #2c3e50;
+            font-size: 1.2rem; /* Lebih besar */
         }
         
         .chart-container {
             margin-top: 20px;
             height: 220px;
             position: relative;
-        }
-        
-        .data-history {
-            grid-column: 1 / -1;
         }
         
         .table-container {
@@ -350,9 +362,27 @@
             font-size: 0.85rem;
         }
         
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .gps {
+                grid-column: span 2;
+            }
+            
+            .data-history {
+                grid-column: span 2;
+            }
+        }
+        
         @media (max-width: 768px) {
             .dashboard {
                 grid-template-columns: 1fr;
+            }
+            
+            .heart-rate, .sleep-level, .gps, .data-history {
+                grid-column: 1;
             }
             
             header h1 {
@@ -361,6 +391,15 @@
             
             .card-value {
                 font-size: 2.8rem;
+            }
+            
+            .gps .map-container {
+                height: 250px; /* Tinggi peta di mobile */
+            }
+            
+            .coordinates {
+                padding: 15px;
+                font-size: 1rem;
             }
         }
     </style>
@@ -402,7 +441,7 @@
                 </div>
             </div>
             
-            <!-- GPS Location Card -->
+            <!-- GPS Location Card - DOUBLE SIZE -->
             <div class="card gps">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-map-marker-alt"></i> Lokasi GPS</h2>
