@@ -28,210 +28,274 @@
         }
         
         body {
-            background: #f5f7fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
         
         header {
             background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            text-align: center;
         }
         
         header h1 {
-            font-size: 2rem;
-            color: #2c3e50;
-            display: flex;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
+            gap: 15px;
+            margin-bottom: 10px;
         }
         
         header h1 i {
-            color: #e74c3c;
+            -webkit-text-fill-color: #e74c3c;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(1); }
         }
         
         header p {
             color: #7f8c8d;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            margin-bottom: 15px;
         }
         
         .device-badge {
             display: inline-block;
-            background: #3498db;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 0.95rem;
             font-weight: 600;
-            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
-        .dashboard {
+        .main-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(12, 1fr);
             gap: 20px;
             margin-bottom: 25px;
         }
         
         .card {
             background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        
+        .heart-rate-card {
+            grid-column: span 4;
+        }
+        
+        .sleep-card {
+            grid-column: span 4;
+        }
+        
+        .gps-card {
+            grid-column: span 4;
+        }
+        
+        .history-card {
+            grid-column: span 12;
         }
         
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #ecf0f1;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #f0f0f0;
         }
         
         .card-title {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: #2c3e50;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 600;
+            gap: 12px;
+            font-weight: 700;
         }
         
         .card-title i {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
         }
         
-        .heart-rate .card-title i {
+        .heart-rate-card .card-title i {
             color: #e74c3c;
         }
         
-        .sleep-level .card-title i {
+        .sleep-card .card-title i {
             color: #3498db;
         }
         
-        .gps .card-title i {
+        .gps-card .card-title i {
             color: #27ae60;
         }
         
         .card-value {
-            font-size: 3.5rem;
-            font-weight: 700;
+            font-size: 4.5rem;
+            font-weight: 800;
             text-align: center;
-            margin: 20px 0;
+            margin: 30px 0;
             color: #2c3e50;
+            line-height: 1;
         }
         
-        .heart-rate .card-value {
-            color: #e74c3c;
+        .heart-rate-card .card-value {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        .sleep-level .card-value {
-            color: #3498db;
+        .sleep-card .card-value {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .card-subtitle {
             text-align: center;
             color: #7f8c8d;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 30px;
             font-weight: 600;
             font-size: 0.95rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .status-normal {
-            background: #d5f4e6;
+            background: linear-gradient(135deg, #d5f4e6 0%, #b8e6d5 100%);
             color: #27ae60;
         }
         
         .status-light {
-            background: #fff3cd;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
             color: #f39c12;
         }
         
         .status-medium {
-            background: #ffe5cc;
+            background: linear-gradient(135deg, #ffe5cc 0%, #ffd4a3 100%);
             color: #e67e22;
         }
         
         .status-heavy {
-            background: #fadbd8;
+            background: linear-gradient(135deg, #fadbd8 0%, #f5c6cb 100%);
             color: #e74c3c;
         }
         
         .status-indicator {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             display: inline-block;
+            animation: pulse 2s infinite;
         }
         
         .map-container {
-            height: 280px;
-            border-radius: 12px;
+            height: 320px;
+            border-radius: 15px;
             overflow: hidden;
-            border: 2px solid #ecf0f1;
-            margin-top: 15px;
+            border: 3px solid #f0f0f0;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
         .coordinates {
-            display: flex;
-            justify-content: space-around;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
         }
         
         .coord-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         
         .coord-label {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #7f8c8d;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
         
         .coord-value {
             font-family: 'Courier New', monospace;
-            font-weight: 600;
+            font-weight: 700;
             color: #2c3e50;
+            font-size: 1.1rem;
         }
         
         .chart-container {
-            margin-top: 20px;
-            height: 220px;
+            margin-top: 25px;
+            height: 250px;
             position: relative;
         }
         
-        .data-history {
-            grid-column: 1 / -1;
+        .table-container {
+            max-height: 450px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border-radius: 15px;
+            border: 2px solid #f0f0f0;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
         }
         
-        .table-container {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-top: 15px;
+        .table-container::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
             border-radius: 10px;
-            border: 1px solid #ecf0f1;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
         }
         
         table {
@@ -240,127 +304,163 @@
         }
         
         th {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             position: sticky;
             top: 0;
             z-index: 10;
-            padding: 12px;
+            padding: 15px;
             text-align: left;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 2px solid #ecf0f1;
-            font-size: 0.9rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         td {
-            padding: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 0.9rem;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95rem;
         }
         
         tr:hover {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
         
         .btn {
-            padding: 8px 16px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
+            font-weight: 700;
+            font-size: 0.9rem;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .btn-primary {
-            background: #3498db;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
             color: white;
         }
         
         .btn-primary:hover {
-            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
         }
         
         .btn-danger {
-            background: #e74c3c;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
             color: white;
         }
         
         .btn-danger:hover {
-            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
         }
         
         .status-bar {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
+            bottom: 25px;
+            right: 25px;
             background: white;
-            padding: 12px 20px;
-            border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            gap: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            z-index: 1000;
         }
         
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
         
         .status-connected {
             background: #27ae60;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
         }
         
         .status-disconnected {
             background: #e74c3c;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
         }
         
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
         }
         
         .loading {
             text-align: center;
-            padding: 40px;
+            padding: 60px;
             color: #7f8c8d;
         }
         
         .loading i {
-            font-size: 2.5rem;
-            color: #3498db;
-            margin-bottom: 10px;
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 15px;
         }
         
         .stats-footer {
             display: flex;
             justify-content: space-between;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #ecf0f1;
-            color: #7f8c8d;
-            font-size: 0.85rem;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            color: #2c3e50;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 1200px) {
+            .heart-rate-card, .sleep-card, .gps-card {
+                grid-column: span 6;
+            }
         }
         
         @media (max-width: 768px) {
-            .dashboard {
-                grid-template-columns: 1fr;
+            body {
+                padding: 10px;
             }
             
             header h1 {
-                font-size: 1.5rem;
+                font-size: 1.8rem;
             }
             
             .card-value {
-                font-size: 2.8rem;
+                font-size: 3rem;
+            }
+            
+            .heart-rate-card, .sleep-card, .gps-card {
+                grid-column: span 12;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .coordinates {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                bottom: 15px;
+                right: 15px;
+                left: 15px;
+                justify-content: center;
             }
         }
     </style>
@@ -370,12 +470,12 @@
         <header>
             <h1><i class="fas fa-heartbeat"></i> Health Monitor Dashboard</h1>
             <p>Real-time monitoring sistem kesehatan</p>
-            <div class="device-badge">Device: <span id="deviceId">HM2025</span></div>
+            <div class="device-badge"><i class="fas fa-microchip"></i> Device: <span id="deviceId">HM2025</span></div>
         </header>
         
-        <div class="dashboard">
+        <div class="main-grid">
             <!-- Heart Rate Card -->
-            <div class="card heart-rate">
+            <div class="card heart-rate-card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-heart"></i> Detak Jantung</h2>
                     <span class="status-badge status-normal" id="heartStatus">Normal</span>
@@ -389,12 +489,13 @@
             </div>
             
             <!-- Sleep Level Card -->
-            <div class="card sleep-level">
+            <div class="card sleep-card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-moon"></i> Tingkat Kantuk</h2>
                 </div>
                 <div class="card-value" id="sleepValue">--</div>
-                <div style="text-align: center; margin-top: 15px;">
+                <div class="card-subtitle">Level Monitoring</div>
+                <div style="text-align: center; margin-top: 25px;">
                     <span class="status-badge status-normal" id="sleepStatus">
                         <span class="status-indicator status-connected"></span>
                         Menunggu data...
@@ -403,31 +504,31 @@
             </div>
             
             <!-- GPS Location Card -->
-            <div class="card gps">
+            <div class="card gps-card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-map-marker-alt"></i> Lokasi GPS</h2>
-                    <span id="gpsStatus" style="color: #7f8c8d; font-size: 0.85rem;">Menunggu...</span>
+                    <span id="gpsStatus" style="color: #7f8c8d; font-size: 0.9rem; font-weight: 600;"><i class="fas fa-sync fa-spin"></i> Menunggu...</span>
                 </div>
                 
                 <div class="map-container" id="map"></div>
                 
                 <div class="coordinates">
                     <div class="coord-item">
-                        <div class="coord-label">Latitude</div>
+                        <div class="coord-label"><i class="fas fa-location-arrow"></i> Latitude</div>
                         <div class="coord-value" id="latitude">--</div>
                     </div>
                     <div class="coord-item">
-                        <div class="coord-label">Longitude</div>
+                        <div class="coord-label"><i class="fas fa-location-arrow"></i> Longitude</div>
                         <div class="coord-value" id="longitude">--</div>
                     </div>
                 </div>
             </div>
             
             <!-- Data History Card -->
-            <div class="card data-history">
+            <div class="card history-card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-history"></i> Riwayat Data</h2>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; gap: 12px;">
                         <button id="refreshBtn" class="btn btn-primary">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
@@ -441,10 +542,10 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Waktu</th>
-                                <th>BPM</th>
-                                <th>Kantuk</th>
-                                <th>Lokasi</th>
+                                <th><i class="fas fa-clock"></i> Waktu</th>
+                                <th><i class="fas fa-heartbeat"></i> BPM</th>
+                                <th><i class="fas fa-moon"></i> Kantuk</th>
+                                <th><i class="fas fa-map-marker-alt"></i> Lokasi</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -459,8 +560,8 @@
                 </div>
                 
                 <div class="stats-footer">
-                    <div>Total: <strong id="totalCount">0</strong> data</div>
-                    <div>Tampil: <strong id="displayCount">0</strong> data</div>
+                    <div><i class="fas fa-database"></i> Total: <strong id="totalCount">0</strong> data</div>
+                    <div><i class="fas fa-eye"></i> Tampil: <strong id="displayCount">0</strong> data</div>
                 </div>
             </div>
         </div>
@@ -515,10 +616,13 @@
                         data: [],
                         borderColor: '#e74c3c',
                         backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        borderWidth: 2,
+                        borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 3
+                        pointRadius: 4,
+                        pointBackgroundColor: '#e74c3c',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
@@ -529,12 +633,14 @@
                     },
                     scales: {
                         x: {
-                            ticks: { maxTicksLimit: 10 }
+                            ticks: { maxTicksLimit: 10 },
+                            grid: { display: false }
                         },
                         y: {
                             beginAtZero: false,
                             suggestedMin: 40,
-                            suggestedMax: 120
+                            suggestedMax: 120,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
                         }
                     }
                 }
@@ -564,7 +670,7 @@
                     <tr>
                         <td colspan="4" class="loading">
                             <i class="fas fa-database"></i>
-                            <p>Tidak ada data</p>
+                            <p>Tidak ada data tersedia</p>
                         </td>
                     </tr>
                 `;
@@ -593,10 +699,10 @@
                 
                 html += `
                     <tr>
-                        <td>${time}</td>
-                        <td><strong>${record.bpm || '--'}</strong></td>
-                        <td><span style="color: ${sleepColor}; font-weight: 600;">${sleepText}</span></td>
-                        <td style="font-family: monospace; font-size: 0.85rem;">${location}</td>
+                        <td><i class="fas fa-clock" style="color: #95a5a6; margin-right: 8px;"></i>${time}</td>
+                        <td><strong style="font-size: 1.1rem;">${record.bpm || '--'}</strong></td>
+                        <td><span style="color: ${sleepColor}; font-weight: 700;">${sleepText}</span></td>
+                        <td style="font-family: monospace; font-size: 0.9rem;">${location}</td>
                     </tr>
                 `;
             });
@@ -614,13 +720,13 @@
                 
                 const heartStatus = document.getElementById('heartStatus');
                 if (data.bpm < 60) {
-                    heartStatus.textContent = 'Rendah';
+                    heartStatus.innerHTML = '<span class="status-indicator" style="background: #f39c12;"></span> Rendah';
                     heartStatus.className = 'status-badge status-light';
                 } else if (data.bpm <= 100) {
-                    heartStatus.textContent = 'Normal';
+                    heartStatus.innerHTML = '<span class="status-indicator status-connected"></span> Normal';
                     heartStatus.className = 'status-badge status-normal';
                 } else {
-                    heartStatus.textContent = 'Tinggi';
+                    heartStatus.innerHTML = '<span class="status-indicator status-disconnected"></span> Tinggi';
                     heartStatus.className = 'status-badge status-heavy';
                 }
             }
@@ -716,31 +822,3 @@
             document.getElementById('clearBtn').addEventListener('click', clearData);
             
             // Real-time Listener for New Data
-            database.ref(`devices/${deviceId}/records`).limitToLast(1).on('child_added', (snapshot) => {
-                const newData = snapshot.val();
-                newData.timestamp = parseInt(snapshot.key);
-                
-                // Check if this is truly new data
-                const exists = allRecords.some(r => r.timestamp === newData.timestamp);
-                if (!exists) {
-                    allRecords.unshift(newData);
-                    updateTable();
-                    updateChart();
-                    updateDisplay(newData);
-                    console.log('New data received:', newData);
-                }
-            });
-            
-            // Connection Status Monitor
-            database.ref('.info/connected').on('value', (snapshot) => {
-                updateStatus(snapshot.val() === true);
-            });
-        });
-        
-        // Handle Window Resize
-        window.addEventListener('resize', () => {
-            if (map) map.invalidateSize();
-        });
-    </script>
-</body>
-</html>
